@@ -1,6 +1,8 @@
 import * as path from "@std/path";
 
-export const JSR_REGEX = /^jsr:@([^@]+)@\^([\d\,\.\ ]+)(\/[^@]*)?$/;
+import { compareVersions } from "compare-versions";
+
+export const JSR_REGEX = /^jsr:@([^@]+)@\^([^\/]+)(\/[^@]*)?$/;
 
 export interface DenoJson {
   // deno-lint-ignore no-explicit-any
@@ -8,11 +10,18 @@ export interface DenoJson {
   imports?: Imports;
 }
 
-interface Imports {
+export interface Imports {
   [key: string]: string;
 }
 
-interface PackageInfo {
+export interface OutDateInfo {
+  importUrl: string;
+  packageName: string;
+  currentVersion: string;
+  latestVersion: string;
+}
+
+export interface PackageInfo {
   scope: string;
   package: string;
   version: string;
@@ -47,7 +56,10 @@ async function fetchPackage(
   if (data.length == 0) {
     return undefined;
   }
-  return data[0];
+
+  // SKIP RC package
+  const dataNoRc = data.find((version) => !version.version.includes("rc"));
+  return dataNoRc || data[0];
 }
 
 async function ReadImportData(rootDir: string): Promise<DenoJson | undefined> {
@@ -63,13 +75,16 @@ async function ReadImportData(rootDir: string): Promise<DenoJson | undefined> {
   return undefined;
 }
 
-export async function CheckUpdate(rootDir: string) {
+export async function CheckUpdate(
+  rootDir: string,
+): Promise<OutDateInfo[] | undefined> {
   const json_data = await ReadImportData(rootDir);
   if (!json_data) {
     console.log("no import argument in json or do no contain json");
     return;
   }
   const importData = json_data.imports!;
+  const infos: OutDateInfo[] = [];
   for (const key in importData) {
     const match = importData[key].match(JSR_REGEX);
     if (match) {
@@ -80,13 +95,17 @@ export async function CheckUpdate(rootDir: string) {
         console.log(`Cannot fetch info for ${packageName}`);
       }
       const version = match[2]; // "^0.1.47"
-      if (data!.version != version) {
-        console.log(
-          `${packageName} outofdate, newest version is ${data!.version}`,
-        );
+      if (compareVersions(data!.version, version) > 0) {
+        infos.push({
+          importUrl: importData[key],
+          packageName,
+          currentVersion: version,
+          latestVersion: data!.version,
+        });
       }
     }
   }
+  return infos;
 }
 
 export async function ForceUpdate(
