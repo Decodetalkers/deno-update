@@ -107,7 +107,7 @@ export async function ForceUpdate(
       if (!data) {
         console.log(`Cannot fetch info for ${packageName}`);
       }
-      const version = match[2]; // "^0.1.47"
+      const version = match[2]; // "0.1.47"
       const path = match[3] || ""; // "/bac" (or empty string if no path)
 
       if (data!.version != version) {
