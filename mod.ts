@@ -1,8 +1,6 @@
 import * as path from "@std/path";
 
-const JSR_REGEX = /^jsr:@([^@]+)@\^([\d\,\.\ ]+)(\/[^@]*)?$/;
-
-const PACKAGE_REGEX = /@([^@^\/]+)\/([^@^\/]+)/;
+export const JSR_REGEX = /^jsr:@([^@]+)@\^([\d\,\.\ ]+)(\/[^@]*)?$/;
 
 export interface DenoJson {
   // deno-lint-ignore no-explicit-any
@@ -65,7 +63,7 @@ async function ReadImportData(rootDir: string): Promise<DenoJson | undefined> {
   return undefined;
 }
 
-async function CheckUpdate(rootDir: string) {
+export async function CheckUpdate(rootDir: string) {
   const json_data = await ReadImportData(rootDir);
   if (!json_data) {
     console.log("no import argument in json or do no contain json");
@@ -76,15 +74,46 @@ async function CheckUpdate(rootDir: string) {
     const match = importData[key].match(JSR_REGEX);
     if (match) {
       const packageName = match[1]; // "b-fuze/deno-dom"
-      const [scope, name] = packageName.split('\/');
+      const [scope, name] = packageName.split("\/");
       const data = await fetchPackage(scope, name);
       if (!data) {
         console.log(`Cannot fetch info for ${packageName}`);
       }
-      console.log(data);
+      const version = match[2]; // "^0.1.47"
+      if (data!.version != version) {
+        console.log(
+          `${packageName} outofdate, newest version is ${data!.version}`,
+        );
+      }
     }
   }
   return json_data;
 }
 
-console.log((await CheckUpdate("./test"))?.imports);
+export async function ForceUpdate(rootDir: string) {
+  const json_data = await ReadImportData(rootDir);
+  if (!json_data) {
+    console.log("no import argument in json or do no contain json");
+    return;
+  }
+  const importData = json_data.imports!;
+  for (const key in importData) {
+    const match = importData[key].match(JSR_REGEX);
+    if (match) {
+      const packageName = match[1]; // "b-fuze/deno-dom"
+      const [scope, name] = packageName.split("\/");
+      const data = await fetchPackage(scope, name);
+      if (!data) {
+        console.log(`Cannot fetch info for ${packageName}`);
+      }
+      const version = match[2]; // "^0.1.47"
+      const path = match[3] || ""; // "/bac" (or empty string if no path)
+
+      if (data!.version != version) {
+        const url = `jsx:@${packageName}@^${data!.version}${path}`;
+        importData[key] = url;
+      }
+    }
+  }
+  return json_data;
+}
