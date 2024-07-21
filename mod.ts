@@ -87,7 +87,6 @@ export async function CheckUpdate(rootDir: string) {
       }
     }
   }
-  return json_data;
 }
 
 export async function ForceUpdate(rootDir: string) {
