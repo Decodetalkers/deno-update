@@ -111,7 +111,7 @@ export async function ForceUpdate(
       const path = match[3] || ""; // "/bac" (or empty string if no path)
 
       if (data!.version != version) {
-        const url = `jsx:@${packageName}@^${data!.version}${path}`;
+        const url = `jsr:@${packageName}@^${data!.version}${path}`;
         importData[key] = url;
       }
     }
