@@ -89,7 +89,9 @@ export async function CheckUpdate(rootDir: string) {
   }
 }
 
-export async function ForceUpdate(rootDir: string) {
+export async function ForceUpdate(
+  rootDir: string,
+): Promise<DenoJson | undefined> {
   const json_data = await ReadImportData(rootDir);
   if (!json_data) {
     console.log("no import argument in json or do no contain json");

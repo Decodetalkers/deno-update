@@ -14,6 +14,20 @@ interface ArgsParses {
   version?: string;
 }
 
+function help() {
+  console.log("welcome to deno-update cli");
+  console.log();
+  console.log("--checkUpdate  use this argument to checkOutdate package");
+  console.log("--forceUpdate  use this argument to forceUpdate packages");
+  console.log(
+    "--path         use this argument to set the root path of the project",
+  );
+  console.log("--version      get the project version");
+  console.log();
+  console.log(`version ${version}`);
+  Deno.exit(0);
+}
+
 const input_args = parseArgs(Deno.args) as ArgsParses;
 
 if (input_args.version) {
@@ -22,8 +36,7 @@ if (input_args.version) {
 }
 
 if (input_args.help) {
-  console.log("welcome to deno-update cli");
-  Deno.exit(0);
+  help();
 }
 
 const path = input_args.path || "./";
@@ -38,6 +51,8 @@ if (input_args.forceUpdate) {
   if (!data) {
     Deno.exit(0);
   }
-  await Deno.writeTextFile(`${path}/deno.json`, JSON.stringify(data));
+  await Deno.writeTextFile(`${path}/deno.json`, JSON.stringify(data, null, 2));
   Deno.exit(0);
 }
+
+help();
