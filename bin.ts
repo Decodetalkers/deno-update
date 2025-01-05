@@ -13,7 +13,7 @@ interface ArgsParses {
   checkUpdate?: boolean;
   forceUpdate?: boolean;
   path?: string;
-  version?: string;
+  version?: boolean;
 }
 
 function help() {
